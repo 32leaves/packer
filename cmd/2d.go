@@ -52,7 +52,7 @@ var twodCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		sol, err := twod.NextFitDecreasingHeight(problem)
+		sol, err := twod.FirstFitDecreasingHeight(problem)
 		if err != nil {
 			fmt.Printf("cannot solve problem: %v\n", err)
 			os.Exit(1)

@@ -22,6 +22,11 @@ import (
 // E. G. Coffman, Jr., M. R. Garey, D. S. Johnson, and R. E. Tarjan
 // SIAM Journal on Computing 1980 9:4, 808-826
 func NextFitDecreasingHeight(problem Problem) (*Solution, error) {
+	err := problem.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	sort.Slice(problem.Items, func(i, j int) bool {
 		return problem.Items[j].Height < problem.Items[i].Height
 	})
@@ -30,16 +35,22 @@ func NextFitDecreasingHeight(problem Problem) (*Solution, error) {
 	solution := Solution{Sheets: []PackedSheet{}, Cost: perSheetCost}
 
 	currentSheet := PackedSheet{Sheet: problem.Sheet, Items: make([]PackedItem, 0)}
+	thisLevel := int64(0)
 	level := int64(0)
 	fill := int64(0)
 	for _, item := range problem.Items {
-		if item.Width > currentSheet.Width {
-			return nil, &NoSolutionError{item, "item is wider than the sheet"}
+		// the first item needs to initialize thisLevel, as it also started a level
+		if thisLevel == 0 {
+			thisLevel = item.Height
 		}
 
 		// need a new level
 		if fill+item.Width > currentSheet.Width {
-			level += item.Height
+			level += thisLevel
+			fill = 0
+
+			// this item marks the start of a new level, thus its height is the offset for the next level
+			thisLevel = item.Height
 
 			// need a new sheet
 			if 0 < currentSheet.Height && currentSheet.Height < level {
@@ -48,7 +59,6 @@ func NextFitDecreasingHeight(problem Problem) (*Solution, error) {
 
 				// create new one
 				currentSheet = PackedSheet{Sheet: problem.Sheet, Items: make([]PackedItem, 0)}
-				fill = 0
 				level = 0
 
 				solution.Cost += perSheetCost
@@ -65,4 +75,79 @@ func NextFitDecreasingHeight(problem Problem) (*Solution, error) {
 	solution.Sheets = append(solution.Sheets, currentSheet)
 
 	return &solution, nil
+}
+
+// FirstFitDecreasingHeight implements the first-fit-decreasing-height algorithm of
+// Performance Bounds for Level-Oriented Two-Dimensional Packing Algorithms
+// E. G. Coffman, Jr., M. R. Garey, D. S. Johnson, and R. E. Tarjan
+// SIAM Journal on Computing 1980 9:4, 808-826
+func FirstFitDecreasingHeight(problem Problem) (*Solution, error) {
+	err := problem.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(problem.Items, func(i, j int) bool {
+		return problem.Items[j].Height < problem.Items[i].Height
+	})
+
+	type level struct {
+		Height    int64
+		SpaceLeft int64
+		Items     []PackedItem
+	}
+
+	// map items to levels
+	var levels []*level
+	for _, item := range problem.Items {
+		var l *level
+		for _, lvl := range levels {
+			if lvl.Height <= item.Height && lvl.SpaceLeft >= item.Width {
+				l = lvl
+				break
+			}
+		}
+
+		if l == nil {
+			l = &level{item.Height, problem.Sheet.Width, []PackedItem{}}
+			levels = append(levels, l)
+		}
+
+		l.Items = append(l.Items, PackedItem{
+			Item:    item,
+			OffsetX: problem.Sheet.Width - l.SpaceLeft,
+			OffsetY: 0,
+		})
+		l.SpaceLeft -= item.Width
+	}
+
+	// map levels to sheets
+	sol := Solution{[]PackedSheet{}, 0}
+	var sheet *PackedSheet
+	var fill int64
+	for _, lvl := range levels {
+		if sheet == nil {
+			sheet = &PackedSheet{
+				Sheet: problem.Sheet,
+				Items: []PackedItem{},
+			}
+		}
+		if sheet != nil && fill+lvl.Height > sheet.Height {
+			sol.Sheets = append(sol.Sheets, *sheet)
+			fill = 0
+		}
+
+		for _, itm := range lvl.Items {
+			sheet.Items = append(sheet.Items, PackedItem{
+				Item:    itm.Item,
+				OffsetX: itm.OffsetX,
+				OffsetY: fill,
+			})
+		}
+		fill += lvl.Height
+	}
+	sol.Sheets = append(sol.Sheets, *sheet)
+	sol.Cost = int64(len(sol.Sheets)) * problem.Sheet.Width * problem.Sheet.Height
+
+	return &sol, nil
 }

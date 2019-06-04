@@ -10,6 +10,21 @@ type Problem struct {
 	Items []Item `json:"items"`
 }
 
+// Validate checks if the problem can be solved.
+// If this returns an error the problem definitely cannot be solved.
+// If this does not return an error it's still possible that the problem has no solution.
+func (p *Problem) Validate() error {
+	for _, i := range p.Items {
+		if i.Width > p.Sheet.Width {
+			return &NoSolutionError{i, "item is wider than the sheet"}
+		}
+		if i.Height > p.Sheet.Height {
+			return &NoSolutionError{i, "item is taller than the sheet"}
+		}
+	}
+	return nil
+}
+
 // Sheet describes the container we want to pack the items on
 type Sheet struct {
 	Width int64 `json:"width"`
@@ -43,11 +58,32 @@ type Solution struct {
 
 // SVG produces an SVG representation of this item
 func (s *Solution) SVG() string {
+	style := `<style>
+svg {
+    background-color: white;
+}
+.packed-sheet {
+	stroke: black;
+	fill: none;
+}
+.packed-item {
+	stroke: red;
+	fill: none;
+}
+</style>`
+
 	sheets := ""
 	for i, s := range s.Sheets {
 		sheets += fmt.Sprintf("<g transform=\"translate(0,%f)\">%s</g>", float32(i)*float32(s.Height)*1.05, s.SVG())
 	}
-	return fmt.Sprintf("<svg>%s</svg>", sheets)
+
+	var w, h float32
+	if len(s.Sheets) > 0 {
+		w = float32(len(s.Sheets)) * float32(s.Sheets[0].Height) * 1.05
+		h = float32(s.Sheets[0].Width)
+	}
+
+	return fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%f\" height=\"%f\">%s%s</svg>", w, h, style, sheets)
 }
 
 // PackedSheet contains a set of items aranged on a sheet
@@ -61,9 +97,9 @@ func (s *PackedSheet) SVG() string {
 	sheet := s.Sheet.SVG()
 	items := ""
 	for _, i := range s.Items {
-		items += "\n\t" + i.SVG()
+		items += i.SVG()
 	}
-	return fmt.Sprintf("<g class=\"packed-sheet\">\n\t%s\n\t%s</g>", sheet, items)
+	return fmt.Sprintf("<g class=\"packed-sheet\">%s%s</g>", sheet, items)
 }
 
 // PackedItem is an item placed somewhere in space
@@ -75,7 +111,7 @@ type PackedItem struct {
 
 // SVG produces an SVG representation of this item
 func (p *PackedItem) SVG() string {
-	return fmt.Sprintf("<g transform=\"translate(%d,%d)\">%s</g>", p.OffsetX, p.OffsetY, p.Item.SVG())
+	return fmt.Sprintf("<g transform=\"translate(%d,%d)\" class=\"packed-item\">%s</g>", p.OffsetX, p.OffsetY, p.Item.SVG())
 }
 
 // NoSolutionError indicates that a problem has no solution
