@@ -1,0 +1,19 @@
+{
+    "sheet": {
+        "width": 1250,
+        "height": 2500
+    },
+    "items": [
+        {"name": "WorkingTop", "width": 500, "height": 800},
+        {"name": "Base", "width": 500, "height": 800},
+        {"name": "TableSide", "width": 500, "height": 100},
+        {"name": "TableSide", "width": 500, "height": 100},
+
+        {"name": "BearingBlock", "width": 150, "height": 31},
+        {"name": "BearingBlock", "width": 150, "height": 31},
+        {"name": "BearingBlock", "width": 150, "height": 31},
+        {"name": "BearingBlock", "width": 150, "height": 31},
+        {"name": "BearingBlock", "width": 150, "height": 31},
+        {"name": "BearingBlock", "width": 150, "height": 31}
+    ]
+}
