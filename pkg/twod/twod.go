@@ -35,7 +35,7 @@ type Sheet struct {
 
 // SVG produces an SVG representation of this sheet
 func (s *Sheet) SVG() string {
-	return fmt.Sprintf("<rect width=\"%d\" height=\"%d\" class=\"sheet\" />", s.Width, s.Height)
+	return fmt.Sprintf("<rect width=\"%d\" height=\"%d\" class=\"sheet\" />", s.Height, s.Width)
 }
 
 // Item describes a single item we want to pack on a sheet
