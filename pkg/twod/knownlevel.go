@@ -102,7 +102,7 @@ func FirstFitDecreasingHeight(problem Problem) (*Solution, error) {
 	for _, item := range problem.Items {
 		var l *level
 		for _, lvl := range levels {
-			if lvl.Height <= item.Height && lvl.SpaceLeft >= item.Width {
+			if lvl.Height >= item.Height && lvl.SpaceLeft >= item.Width {
 				l = lvl
 				break
 			}
