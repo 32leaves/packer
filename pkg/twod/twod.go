@@ -18,7 +18,7 @@ func (p *Problem) Validate() error {
 		if i.Width > p.Sheet.Width {
 			return &NoSolutionError{i, "item is wider than the sheet"}
 		}
-		if i.Height > p.Sheet.Height {
+		if 0 < p.Sheet.Height && p.Sheet.Height < i.Height {
 			return &NoSolutionError{i, "item is taller than the sheet"}
 		}
 	}

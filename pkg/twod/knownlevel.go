@@ -126,14 +126,15 @@ func FirstFitDecreasingHeight(problem Problem) (*Solution, error) {
 	var sheet *PackedSheet
 	var fill int64
 	for _, lvl := range levels {
-		if sheet == nil {
+		if sheet == nil || (sheet.Height != 0 && fill+lvl.Height > sheet.Height) {
+			if sheet != nil {
+				sol.Sheets = append(sol.Sheets, *sheet)
+			}
+
 			sheet = &PackedSheet{
 				Sheet: problem.Sheet,
 				Items: []PackedItem{},
 			}
-		}
-		if sheet != nil && fill+lvl.Height > sheet.Height {
-			sol.Sheets = append(sol.Sheets, *sheet)
 			fill = 0
 		}
 
@@ -147,7 +148,11 @@ func FirstFitDecreasingHeight(problem Problem) (*Solution, error) {
 		fill += lvl.Height
 	}
 	sol.Sheets = append(sol.Sheets, *sheet)
-	sol.Cost = int64(len(sol.Sheets)) * problem.Sheet.Width * problem.Sheet.Height
+	if problem.Sheet.Height == 0 {
+		sol.Cost = int64(len(sol.Sheets)) * problem.Sheet.Width * fill
+	} else {
+		sol.Cost = int64(len(sol.Sheets)) * problem.Sheet.Width * problem.Sheet.Height
+	}
 
 	return &sol, nil
 }
