@@ -1,0 +1,4 @@
+tasks:
+- command: go get ./...
+checkoutLocation: packer
+workspaceLocation: packer
